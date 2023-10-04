@@ -2,6 +2,8 @@
 
 ## Roadmap
 
+big pages wo pagination?
+
 - [x] get data from result table
 - [x] follow pagination
 - [x] loop dates
