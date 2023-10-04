@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 
 
 target_csv = "../../data/declaratii.integritate.eu/declaratii-ani.csv"
+target_stats_csv = "../../data/declaratii.integritate.eu/stats.csv"
 days_delta = 2
 timeout = 3
 # 5 - Fetch data for each 2-day interval until January 1, 2008
@@ -56,11 +57,15 @@ if advanced_search_panel is None:
 # 4 - Get the current date
 current_date = datetime.now().strftime("%d.%m.%Y")
 
-with open(target_csv, "a", newline="") as csvfile:
+with open(target_csv, "a", newline="") as csvfile, open(target_stats_csv, "a", newline="") as statsfile:
     csvwriter = csv.writer(csvfile)
     header = []
-
+    stats_writer = csv.writer(statsfile)
+    stats_header = ["start_date", "current_date", "results_count", "daily_total"]
+    # stats_writer.writerow(stats_header)
+    
     while current_date > end_date:
+        dailystats = 0
         # Input the current start date and end date
         start_date = (datetime.strptime(current_date, "%d.%m.%Y") - timedelta(days=days_delta)).strftime("%d.%m.%Y")
         print('--- ' + str(start_date) + ' ' + str(current_date))
@@ -134,8 +139,10 @@ with open(target_csv, "a", newline="") as csvfile:
                 )
             )
           
-            print(f"No results found for {start_date} to {current_date}")
+            print(f" --> 0 results between {start_date} and {current_date}")
             current_date = (datetime.strptime(start_date, "%d.%m.%Y") - timedelta(days=days_delta)).strftime("%d.%m.%Y")
+            
+            stats_writer.writerow([start_date, current_date, '0', '0'])
             continue
         except:
             pass
@@ -148,6 +155,7 @@ with open(target_csv, "a", newline="") as csvfile:
                 )
             )
             print(f" -> {results_count.text} results for {start_date} to {current_date}")
+            
         except:
             pass
 
@@ -185,6 +193,7 @@ with open(target_csv, "a", newline="") as csvfile:
                     row_data.append(vezi_declaratie_link)  # Add the 'Vezi declaratie' link
                     row_data.append(nxtpg)  # Add the 'Vezi declaratie' link
                     csvwriter.writerow(row_data)
+                    dailystats += 1
             except TimeoutException:
                 print(f"187 Timeout: Results table not found for {start_date} to {current_date}")
             # check if pagination and if next page active
@@ -220,6 +229,7 @@ with open(target_csv, "a", newline="") as csvfile:
                 # pass  # Pagination section is not present
 
         # Update current_date for the next iteration
+        stats_writer.writerow([start_date, current_date, results_count.text, dailystats])
         current_date = (datetime.strptime(start_date, "%d.%m.%Y") - timedelta(days=days_delta)).strftime("%d.%m.%Y")
         # print('next date')
     
