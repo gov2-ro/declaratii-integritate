@@ -4,22 +4,21 @@ from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.firefox.service import Service as FirefoxService
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import StaleElementReferenceException, TimeoutException, ElementNotInteractableException, NoSuchElementException
 import csv
 from datetime import datetime, timedelta
-from selenium.common.exceptions import TimeoutException
 
-target_csv = "../../data/declaratii.integritate.eu/declaratii-ani.csv"
-days_delta = 2
-timeout = 3
-source_url = "https://declaratii.integritate.eu/index.html"
+timeout = 10  # Increase the timeout value
 gecko_driver_path = '/usr/local/bin/geckodriver'
+target_csv = "../../data/declaratii.integritate.eu/decl-integritate.csv"  # Updated CSV path
 
+# Create a new instance of the Firefox driver
 firefox_options = Options()
 firefox_options.headless = False
 driver = webdriver.Firefox(service=FirefoxService(executable_path=gecko_driver_path), options=firefox_options)
 
 # 1 - Open the URL
-driver.get(source_url)
+driver.get("https://declaratii.integritate.eu/index.html")
 
 # 2 - Click 'Căutare avansată' button if it's already present; otherwise, wait for it
 advanced_search_button = None
@@ -55,13 +54,13 @@ current_date = datetime.now().strftime("%d.%m.%Y")
 # 5 - Fetch data for each 2-day interval until January 1, 2008
 end_date = "01.01.2008"
 
-with open(target_csv, "w", newline="") as csvfile:
+with open(target_csv, "w", newline="") as csvfile:  # Updated CSV path
     csvwriter = csv.writer(csvfile)
     header = []
 
     while current_date > end_date:
         # Input the current start date and end date
-        start_date = (datetime.strptime(current_date, "%d.%m.%Y") - timedelta(days=days_delta)).strftime("%d.%m.%Y")
+        start_date = (datetime.strptime(current_date, "%d.%m.%Y") - timedelta(days=2)).strftime("%d.%m.%Y")
 
         driver.find_element(By.ID, "form:endDate_input").clear()
         driver.find_element(By.ID, "form:endDate_input").send_keys(current_date)
@@ -88,73 +87,45 @@ with open(target_csv, "w", newline="") as csvfile:
 
         search_button.click()
 
-        # 6 - Check for the 'Căutarea întoarce mai mult de 10 000 de rezultate' message
+        # Handle pagination if the pagination section is present
         try:
-            error_message = WebDriverWait(driver, timeout).until(
-                EC.presence_of_element_located(
-                    (By.XPATH, "//form[@id='errorForm']/h5[text()='Căutarea întoarce mai mult de 10 000 de rezultate. Vă rugăm să mai rafinați termenii de căutare']")
-                )
+            pagination = WebDriverWait(driver, timeout).until(
+                EC.presence_of_element_located((By.CLASS_NAME, "ui-paginator-pages"))
             )
-            print(f"Error: 10k for {start_date} to {current_date}")
-            current_date = (datetime.strptime(start_date, "%d.%m.%Y") - timedelta(days=1)).strftime("%d.%m.%Y")
-            continue
-        except:
-            pass
 
-        # 7 - Check for the 'Nu s-au găsit rezultate' message
-        try:
-            no_results_message = WebDriverWait(driver, timeout).until(
-                EC.presence_of_element_located(
-                    (By.XPATH, "//div[@id='form:j_idt142_content']/h5[text()='Nu s-au găsit rezultate']")
-                )
-            )
-            print(f"No results found for {start_date} to {current_date}")
-            current_date = (datetime.strptime(start_date, "%d.%m.%Y") - timedelta(days=1)).strftime("%d.%m.%Y")
-            continue
-        except:
-            pass
-
-        # 8 - Find and print the number of results
-        try:
-            results_count = WebDriverWait(driver, timeout).until(
-                EC.presence_of_element_located(
-                    (By.XPATH, "//h5[contains(text(),'Rezultatele căutării:')]/span[@id='form:_t148']")
-                )
-            )
-            print(f"Number of results for {start_date} to {current_date}: {results_count.text}")
-        except:
-            pass
-
-        # 9 - Find the table and save data to CSV file
-        if not header:
-            try:
+            while True:
                 results_table = WebDriverWait(driver, timeout).until(
                     EC.presence_of_element_located((By.ID, "form:resultsTable"))
                 )
                 rows = results_table.find_elements(By.TAG_NAME, "tr")
 
-                header = [header.text for header in rows[0].find_elements(By.TAG_NAME, "th")[:-1]]  # Exclude the last 'Distribuie' header
-                header.append("Vezi declaratie")  # Add the 'Vezi declaratie' header
-                csvwriter.writerow(header)
-            except TimeoutException:
-                print(f"Timeout: Results table not found for {start_date} to {current_date}")
-                current_date = (datetime.strptime(start_date, "%d.%m.%Y") - timedelta(days=1)).strftime("%d.%m.%Y")
-                continue
+                if not header:
+                    header = [header.text for header in rows[0].find_elements(By.TAG_NAME, "th")[:-1]]  # Exclude the last 'Distribuie' header
+                    header.append("Vezi declaratie")  # Add the 'Vezi declaratie' header
+                    csvwriter.writerow(header)
 
-        try:
-            results_table = WebDriverWait(driver, timeout).until(
-                EC.presence_of_element_located((By.ID, "form:resultsTable"))
-            )
-            rows = results_table.find_elements(By.TAG_NAME, "tr")
+                for row in rows[1:]:
+                    cells = row.find_elements(By.TAG_NAME, "td")[:-1]  # Exclude the last 'Distribuie' column
+                    vezi_declaratie_link = row.find_element(By.XPATH, ".//a[contains(text(),'Vezi document')]").get_attribute("href")
+                    row_data = [cell.text for cell in cells]
+                    row_data.append(vezi_declaratie_link)  # Add the 'Vezi declaratie' link
+                    csvwriter.writerow(row_data)
 
-            for row in rows[1:]:
-                cells = row.find_elements(By.TAG_NAME, "td")[:-1]  # Exclude the last 'Distribuie' column
-                vezi_declaratie_link = row.find_element(By.XPATH, ".//a[contains(text(),'Vezi document')]").get_attribute("href")
-                row_data = [cell.text for cell in cells]
-                row_data.append(vezi_declaratie_link)  # Add the 'Vezi declaratie' link
-                csvwriter.writerow(row_data)
-        except TimeoutException:
-            print(f"Timeout: Results table not found for {start_date} to {current_date}")
+                # Check for the presence of the "Next" page link
+                next_page_link = driver.find_elements(By.XPATH, "//a[@id='form:resultsTable_paginatorbottom_nextPageLink' and not(contains(@class, 'ui-state-disabled'))]")
+
+                if not next_page_link:
+                    break  # No more pages to scrape
+
+                # Scroll to the "Next" page link and then click it
+                try:
+                    driver.execute_script("arguments[0].scrollIntoView();", next_page_link[0])
+                    next_page_link[0].click()
+                except ElementNotInteractableException:
+                    break  # Break the loop if the element is not interactable
+
+        except (StaleElementReferenceException, NoSuchElementException, TimeoutException):
+            pass  # Pagination section is not present
 
         # Update current_date for the next iteration
         current_date = (datetime.strptime(start_date, "%d.%m.%Y") - timedelta(days=1)).strftime("%d.%m.%Y")
