@@ -56,8 +56,6 @@ if advanced_search_panel is None:
 # 4 - Get the current date
 current_date = datetime.now().strftime("%d.%m.%Y")
 
-
-
 with open(target_csv, "a", newline="") as csvfile:
     csvwriter = csv.writer(csvfile)
     header = []
@@ -167,6 +165,7 @@ with open(target_csv, "a", newline="") as csvfile:
 
                     header = [header.text for header in rows[0].find_elements(By.TAG_NAME, "th")[:-1]]  # Exclude the last 'Distribuie' header
                     header.append("Vezi declaratie")  # Add the 'Vezi declaratie' header
+                    header.append("page")  # Add the 'page' header
                     csvwriter.writerow(header)
                 except TimeoutException:
                     print(f"170 Timeout: Results table not found for {start_date} to {current_date}")
@@ -184,6 +183,7 @@ with open(target_csv, "a", newline="") as csvfile:
                     vezi_declaratie_link = row.find_element(By.XPATH, ".//a[contains(text(),'Vezi document')]").get_attribute("href")
                     row_data = [cell.text for cell in cells]
                     row_data.append(vezi_declaratie_link)  # Add the 'Vezi declaratie' link
+                    row_data.append(nxtpg)  # Add the 'Vezi declaratie' link
                     csvwriter.writerow(row_data)
             except TimeoutException:
                 print(f"187 Timeout: Results table not found for {start_date} to {current_date}")
@@ -199,21 +199,21 @@ with open(target_csv, "a", newline="") as csvfile:
 
                 if not next_page_link:
                     next_page = False
-                    break  # No more pages to scrape
+                    # break  # No more pages to scrape
                 else:
                     next_page = True
 
 
-                # Scroll to the "Next" page link and then click it
-                try:
-                    driver.execute_script("arguments[0].scrollIntoView();", next_page_link[0])
-                    next_page_link[0].click()
-                    next_page = True
-                    nxtpg += 1
-                    print('    - p ' + str(nxtpg))
-                except ElementNotInteractableException:
-                    next_page = False
-                    # pass  # Break the loop if the element is not interactable
+                    # Scroll to the "Next" page link and then click it
+                    try:
+                        driver.execute_script("arguments[0].scrollIntoView();", next_page_link[0])
+                        next_page_link[0].click()
+                        next_page = True
+                        nxtpg += 1
+                        print('    - p ' + str(nxtpg))
+                    except ElementNotInteractableException:
+                        next_page = False
+                        # pass  # Break the loop if the element is not interactable
 
             except (StaleElementReferenceException, NoSuchElementException, TimeoutException):
                 next_page = False
