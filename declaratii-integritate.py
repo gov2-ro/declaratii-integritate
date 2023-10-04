@@ -6,11 +6,11 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import csv
 from datetime import datetime, timedelta
+from selenium.common.exceptions import TimeoutException
 
-
-target_csv = "../../data/declaratii.integritate.eu/declaratii-anu.csv"
+target_csv = "../../data/declaratii.integritate.eu/declaratii-ani.csv"
 days_delta = 2
-timeout = 2
+timeout = 3
 source_url = "https://declaratii.integritate.eu/index.html"
 gecko_driver_path = '/usr/local/bin/geckodriver'
 
@@ -77,9 +77,14 @@ with open(target_csv, "w", newline="") as csvfile:
             pass
 
         if search_button is None:
-            search_button = WebDriverWait(driver, timeout).until(
-                EC.element_to_be_clickable((By.ID, "form:submitButtonAS"))
-            )
+            try:
+                search_button = WebDriverWait(driver, timeout).until(
+                    EC.element_to_be_clickable((By.ID, "form:submitButtonAS"))
+                )
+            except TimeoutException:
+                print(f"Timeout: Search button not found for {start_date} to {current_date}")
+                current_date = (datetime.strptime(start_date, "%d.%m.%Y") - timedelta(days=1)).strftime("%d.%m.%Y")
+                continue
 
         search_button.click()
 
@@ -122,26 +127,34 @@ with open(target_csv, "w", newline="") as csvfile:
 
         # 9 - Find the table and save data to CSV file
         if not header:
+            try:
+                results_table = WebDriverWait(driver, timeout).until(
+                    EC.presence_of_element_located((By.ID, "form:resultsTable"))
+                )
+                rows = results_table.find_elements(By.TAG_NAME, "tr")
+
+                header = [header.text for header in rows[0].find_elements(By.TAG_NAME, "th")[:-1]]  # Exclude the last 'Distribuie' header
+                header.append("Vezi declaratie")  # Add the 'Vezi declaratie' header
+                csvwriter.writerow(header)
+            except TimeoutException:
+                print(f"Timeout: Results table not found for {start_date} to {current_date}")
+                current_date = (datetime.strptime(start_date, "%d.%m.%Y") - timedelta(days=1)).strftime("%d.%m.%Y")
+                continue
+
+        try:
             results_table = WebDriverWait(driver, timeout).until(
                 EC.presence_of_element_located((By.ID, "form:resultsTable"))
             )
             rows = results_table.find_elements(By.TAG_NAME, "tr")
 
-            header = [header.text for header in rows[0].find_elements(By.TAG_NAME, "th")[:-1]]  # Exclude the last 'Distribuie' header
-            header.append("Vezi declaratie")  # Add the 'Vezi declaratie' header
-            csvwriter.writerow(header)
-
-        results_table = WebDriverWait(driver, timeout).until(
-            EC.presence_of_element_located((By.ID, "form:resultsTable"))
-        )
-        rows = results_table.find_elements(By.TAG_NAME, "tr")
-
-        for row in rows[1:]:
-            cells = row.find_elements(By.TAG_NAME, "td")[:-1]  # Exclude the last 'Distribuie' column
-            vezi_declaratie_link = row.find_element(By.XPATH, ".//a[contains(text(),'Vezi document')]").get_attribute("href")
-            row_data = [cell.text for cell in cells]
-            row_data.append(vezi_declaratie_link)  # Add the 'Vezi declaratie' link
-            csvwriter.writerow(row_data)
+            for row in rows[1:]:
+                cells = row.find_elements(By.TAG_NAME, "td")[:-1]  # Exclude the last 'Distribuie' column
+                vezi_declaratie_link = row.find_element(By.XPATH, ".//a[contains(text(),'Vezi document')]").get_attribute("href")
+                row_data = [cell.text for cell in cells]
+                row_data.append(vezi_declaratie_link)  # Add the 'Vezi declaratie' link
+                csvwriter.writerow(row_data)
+        except TimeoutException:
+            print(f"Timeout: Results table not found for {start_date} to {current_date}")
 
         # Update current_date for the next iteration
         current_date = (datetime.strptime(start_date, "%d.%m.%Y") - timedelta(days=1)).strftime("%d.%m.%Y")
