@@ -58,34 +58,29 @@ with open(target_csv, "w", newline="") as csvfile:  # Updated CSV path
     csvwriter = csv.writer(csvfile)
     header = []
 
-    while current_date > end_date:
-        # Input the current start date and end date
-        start_date = (datetime.strptime(current_date, "%d.%m.%Y") - timedelta(days=2)).strftime("%d.%m.%Y")
+while current_date > end_date:
+    # Input the current start date and end date
+    start_date = (datetime.strptime(current_date, "%d.%m.%Y") - timedelta(days=2)).strftime("%d.%m.%Y")
 
-        driver.find_element(By.ID, "form:endDate_input").clear()
-        driver.find_element(By.ID, "form:endDate_input").send_keys(current_date)
-        driver.find_element(By.ID, "form:startDate_input").clear()
-        driver.find_element(By.ID, "form:startDate_input").send_keys(start_date)
+    driver.find_element(By.ID, "form:endDate_input").clear()
+    driver.find_element(By.ID, "form:endDate_input").send_keys(current_date)
+    driver.find_element(By.ID, "form:startDate_input").clear()
+    driver.find_element(By.ID, "form:startDate_input").send_keys(start_date)
 
-        # 5 - Click on the search button if it's already present; otherwise, wait for it
-        search_button = None
-
-        try:
-            search_button = driver.find_element(By.ID, "form:submitButtonAS")
-        except:
-            pass
-
-        if search_button is None:
-            try:
-                search_button = WebDriverWait(driver, timeout).until(
-                    EC.element_to_be_clickable((By.ID, "form:submitButtonAS"))
-                )
-            except TimeoutException:
-                print(f"Timeout: Search button not found for {start_date} to {current_date}")
-                current_date = (datetime.strptime(start_date, "%d.%m.%Y") - timedelta(days=1)).strftime("%d.%m.%Y")
-                continue
-
+    # 5 - Wait for the submit button to be clickable
+    try:
+        search_button = WebDriverWait(driver, timeout).until(
+            EC.element_to_be_clickable((By.ID, "form:submitButtonAS"))
+        )
         search_button.click()
+    except NoSuchElementException:
+        print(f"Search button not found for {start_date} to {current_date}")
+        current_date = (datetime.strptime(start_date, "%d.%m.%Y") - timedelta(days=1)).strftime("%d.%m.%Y")
+        continue
+
+    # Open the CSV file inside the loop before writing data to it
+    with open(target_csv, "a", newline="") as csvfile:
+        csvwriter = csv.writer(csvfile)
 
         # Handle pagination if the pagination section is present
         try:
@@ -94,6 +89,13 @@ with open(target_csv, "w", newline="") as csvfile:  # Updated CSV path
             )
 
             while True:
+                # Check for the presence of the error message
+                error_message = driver.find_elements(By.XPATH, "//h5[contains(text(),'Căutarea întoarce mai mult de 10 000 de rezultate. Vă rugăm să mai rafinați termenii de căutare')]")
+
+                if error_message:
+                    print("10k")
+                    break  # Exit the loop if the error message is found
+
                 results_table = WebDriverWait(driver, timeout).until(
                     EC.presence_of_element_located((By.ID, "form:resultsTable"))
                 )
@@ -127,8 +129,8 @@ with open(target_csv, "w", newline="") as csvfile:  # Updated CSV path
         except (StaleElementReferenceException, NoSuchElementException, TimeoutException):
             pass  # Pagination section is not present
 
-        # Update current_date for the next iteration
-        current_date = (datetime.strptime(start_date, "%d.%m.%Y") - timedelta(days=1)).strftime("%d.%m.%Y")
+    # Update current_date for the next iteration
+    current_date = (datetime.strptime(start_date, "%d.%m.%Y") - timedelta(days=1)).strftime("%d.%m.%Y")
 
 # Close the browser
 driver.quit()
