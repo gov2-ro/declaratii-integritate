@@ -10,8 +10,11 @@ from datetime import datetime, timedelta
 
 
 target_csv = "../../data/declaratii.integritate.eu/declaratii-ani.csv"
-days_delta = 5
+days_delta = 2
 timeout = 3
+# 5 - Fetch data for each 2-day interval until January 1, 2008
+end_date = "01.01.2020"
+
 source_url = "https://declaratii.integritate.eu/index.html"
 gecko_driver_path = '/usr/local/bin/geckodriver'
 
@@ -53,8 +56,7 @@ if advanced_search_panel is None:
 # 4 - Get the current date
 current_date = datetime.now().strftime("%d.%m.%Y")
 
-# 5 - Fetch data for each 2-day interval until January 1, 2008
-end_date = "01.01.2008"
+
 
 with open(target_csv, "a", newline="") as csvfile:
     csvwriter = csv.writer(csvfile)
@@ -83,24 +85,48 @@ with open(target_csv, "a", newline="") as csvfile:
                     EC.element_to_be_clickable((By.ID, "form:submitButtonAS"))
                 )
             except TimeoutException:
-                print(f"Timeout: Search button not found for {start_date} to {current_date}")
-                current_date = (datetime.strptime(start_date, "%d.%m.%Y") - timedelta(days=1)).strftime("%d.%m.%Y")
+                print(f"Timeout: 86 Search button not found for {start_date} to {current_date}")
+                # current_date = (datetime.strptime(start_date, "%d.%m.%Y") - timedelta(days=days_delta)).strftime("%d.%m.%Y")
                 continue
 
         search_button.click()
 
-        # 6 - Check for the 'Căutarea întoarce mai mult de 10 000 de rezultate' message
+        # // wait for page load
         try:
             error_message = WebDriverWait(driver, timeout).until(
                 EC.presence_of_element_located(
-                    (By.XPATH, "//form[@id='errorForm']/h5[text()='Căutarea întoarce mai mult de 10 000 de rezultate. Vă rugăm să mai rafinați termenii de căutare']")
+                    # (By.XPATH, "//form[@id='errorForm']/span[contains(text(),' mult de 10 000 de rezultate']")
+                    (By.XPATH, "//footer[@id='footer']")
                 )
             )
-            print(f"Error: 10k for {start_date} to {current_date}")
-            current_date = (datetime.strptime(start_date, "%d.%m.%Y") - timedelta(days=1)).strftime("%d.%m.%Y")
+            if error_message:
+                print(f" no footer Error  {start_date} to {current_date}")
+                breakpoint()
             continue
         except:
             pass
+
+        # 6 - Check for the 'Căutarea întoarce mai mult de 10 000 de rezultate' message
+        # error_form = driver.find_elements_by_id("errorForm")
+        error_form = driver.find_elements(By.XPATH, "//form[@id='errorForm']")
+
+        if error_form and error_form[0].text != '':
+            print(f"// Err: 10k 113 for {start_date} to {current_date}")
+            current_date = (datetime.strptime(start_date, "%d.%m.%Y") - timedelta(days=days_delta)).strftime("%d.%m.%Y")
+            submit_button = driver.find_elements(By.XPATH, "//input[@id='errorForm:inchide' and @type='submit']")
+            if submit_button:
+                try:
+                    # submit_button = driver.find_element_by_xpath("//input[@id='errorForm:inchide' and @type='submit']")
+                    
+                    submit_button[0].click()
+                    print("Clicked on the 'Închide' button.")     
+
+                except:
+                    pass
+        else:
+            # print("The form with id 'errorForm' does not exist.")
+            pass
+        
 
         # 7 - Check for the 'Nu s-au găsit rezultate' message
         try:
@@ -109,8 +135,9 @@ with open(target_csv, "a", newline="") as csvfile:
                     (By.XPATH, "//div[@id='form:j_idt142_content']/h5[text()='Nu s-au găsit rezultate']")
                 )
             )
+          
             print(f"No results found for {start_date} to {current_date}")
-            current_date = (datetime.strptime(start_date, "%d.%m.%Y") - timedelta(days=1)).strftime("%d.%m.%Y")
+            current_date = (datetime.strptime(start_date, "%d.%m.%Y") - timedelta(days=days_delta)).strftime("%d.%m.%Y")
             continue
         except:
             pass
@@ -122,7 +149,7 @@ with open(target_csv, "a", newline="") as csvfile:
                     (By.XPATH, "//h5[contains(text(),'Rezultatele căutării:')]/span[@id='form:_t148']")
                 )
             )
-            print(f"Number of results for {start_date} to {current_date}: {results_count.text}")
+            print(f" -> {results_count.text} results for {start_date} to {current_date}")
         except:
             pass
 
@@ -131,7 +158,7 @@ with open(target_csv, "a", newline="") as csvfile:
         next_page = True
         nxtpg = 0
         while next_page:
-            if not header:
+            if not header:  
                 try:
                     results_table = WebDriverWait(driver, timeout).until(
                         EC.presence_of_element_located((By.ID, "form:resultsTable"))
@@ -142,9 +169,9 @@ with open(target_csv, "a", newline="") as csvfile:
                     header.append("Vezi declaratie")  # Add the 'Vezi declaratie' header
                     csvwriter.writerow(header)
                 except TimeoutException:
-                    print(f"Timeout: Results table not found for {start_date} to {current_date}")
+                    print(f"170 Timeout: Results table not found for {start_date} to {current_date}")
                     current_date = (datetime.strptime(start_date, "%d.%m.%Y") - timedelta(days=1)).strftime("%d.%m.%Y")
-                    continue
+                    break
 
             try:
                 results_table = WebDriverWait(driver, timeout).until(
@@ -159,7 +186,7 @@ with open(target_csv, "a", newline="") as csvfile:
                     row_data.append(vezi_declaratie_link)  # Add the 'Vezi declaratie' link
                     csvwriter.writerow(row_data)
             except TimeoutException:
-                print(f"Timeout: Results table not found for {start_date} to {current_date}")
+                print(f"187 Timeout: Results table not found for {start_date} to {current_date}")
             # check if pagination and if next page active
             try:
                 pagination = WebDriverWait(driver, timeout).until(
@@ -193,8 +220,9 @@ with open(target_csv, "a", newline="") as csvfile:
                 # pass  # Pagination section is not present
 
         # Update current_date for the next iteration
-        current_date = (datetime.strptime(start_date, "%d.%m.%Y") - timedelta(days=1)).strftime("%d.%m.%Y")
-        
+        current_date = (datetime.strptime(start_date, "%d.%m.%Y") - timedelta(days=days_delta)).strftime("%d.%m.%Y")
+        # print('next date')
+    
 
 # Close the browser
 driver.quit()
