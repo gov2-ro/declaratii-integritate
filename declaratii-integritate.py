@@ -9,10 +9,11 @@ import csv
 from datetime import datetime, timedelta
 
 
-target_csv = "../../data/declaratii.integritate.eu/declaratii-ani.csv"
-target_stats_csv = "../../data/declaratii.integritate.eu/stats.csv"
-days_delta = 2
-timeout = 3
+last_date = '15.07.2021'
+target_csv = "../../data/declaratii.integritate.eu/declaratii-ani-x12.csv"
+target_stats_csv = "../../data/declaratii.integritate.eu/stats12.csv"
+days_delta = 12
+timeout = 4
 # 5 - Fetch data for each 2-day interval until January 1, 2008
 end_date = "01.01.2020"
 
@@ -55,7 +56,11 @@ if advanced_search_panel is None:
     )
 
 # 4 - Get the current date
-current_date = datetime.now().strftime("%d.%m.%Y")
+if not last_date:
+    current_date = datetime.now().strftime("%d.%m.%Y")
+else: 
+    current_date = last_date
+
 
 with open(target_csv, "a", newline="") as csvfile, open(target_stats_csv, "a", newline="") as statsfile:
     csvwriter = csv.writer(csvfile)
@@ -74,7 +79,102 @@ with open(target_csv, "a", newline="") as csvfile, open(target_stats_csv, "a", n
         driver.find_element(By.ID, "form:startDate_input").clear()
         driver.find_element(By.ID, "form:startDate_input").send_keys(start_date)
 
-        # 5 - Click on the search button if it's already present; otherwise, wait for it
+       
+        footer = driver.find_element(By.ID, "footer")
+        if footer:
+            print('have footer')
+        else:
+            print('no footer')
+        try:
+            e10k =  driver.find_element(By.XPATH, "//form[@id='errorForm']/span[contains(text(),'mult de 10 000 de rezultate')]")
+            if e10k:
+                print (e10k.text)
+                breakpoint()
+            else:
+                print ('ok 10k')
+        except:
+            pass
+
+            # stats_writer.writerow([start_date, current_date, '10k-1 124', '0'])
+            # current_date = (datetime.strptime(start_date, "%d.%m.%Y") - timedelta(days=days_delta)).strftime("%d.%m.%Y")
+            # submit_button = driver.find_elements(By.XPATH, "//input[@id='errorForm:inchide' and @type='submit']")
+            # if submit_button:
+            #     try:                   
+            #         submit_button[0].click()
+            #         print("Clicked on the 'Închide' button.")     
+            #     except:
+            #         print(' //ERR 133: no submit button')
+            #         breakpoint()
+            #         pass
+            #     break     
+
+
+        # check 10k limt
+        try:
+            error_message = WebDriverWait(driver, timeout).until(
+                EC.presence_of_element_located(
+                    (By.XPATH, "//form[@id='errorForm']/span[contains(text(),' mult de 10 000 de rezultate']")
+                )
+            )
+            if error_message:
+                print(f" 10k-1 124  {start_date} to {current_date}")
+                stats_writer.writerow([start_date, current_date, '10k-1 124', '0'])
+                current_date = (datetime.strptime(start_date, "%d.%m.%Y") - timedelta(days=days_delta)).strftime("%d.%m.%Y")
+                submit_button = driver.find_elements(By.XPATH, "//input[@id='errorForm:inchide' and @type='submit']")
+                if submit_button:
+                    try:                   
+                        submit_button[0].click()
+                        print("Clicked on the 'Închide' button.")     
+                    except:
+                        print(' //ERR 133: no submit button')
+                        breakpoint()
+                        pass
+                    break                # TODO: click on change date, continue
+                # breakpoint()
+                pass
+            
+            continue
+        except:
+            pass
+
+        # 6 - Check for the 'Căutarea întoarce mai mult de 10 000 de rezultate' message
+        # error_form = driver.find_elements_by_id("errorForm")
+        error_form = driver.find_elements(By.XPATH, "//form[@id='errorForm']")
+
+        if error_form and error_form[0].text != '':
+            print(f"// Err: 10k-2 139 for {start_date} to {current_date}")
+            stats_writer.writerow([start_date, current_date, '10k2 139', '0'])
+            current_date = (datetime.strptime(start_date, "%d.%m.%Y") - timedelta(days=days_delta)).strftime("%d.%m.%Y")
+            submit_button = driver.find_elements(By.XPATH, "//input[@id='errorForm:inchide' and @type='submit']")
+            if submit_button:
+                try:                   
+                    submit_button[0].click()
+                    print("Clicked on the 'Închide' button.")     
+
+                except:
+                    pass
+                break
+        else:
+            # print("The form with id 'errorForm' does not exist.")
+            pass
+        
+
+        # 7 - Check for the 'Nu s-au găsit rezultate' message
+        try:
+            no_results_message = WebDriverWait(driver, timeout).until(
+                EC.presence_of_element_located(
+                    (By.XPATH, "//div[@id='form:j_idt142_content']/h5[text()='Nu s-au găsit rezultate']")
+                )
+            )
+          
+            print(f" --> 0 results between {start_date} and {current_date}")
+            stats_writer.writerow([start_date, current_date, '0', '0'])
+            current_date = (datetime.strptime(start_date, "%d.%m.%Y") - timedelta(days=days_delta)).strftime("%d.%m.%Y")
+            continue
+        except:
+            pass
+        
+         # 5 - Click on the search button if it's already present; otherwise, wait for it
         search_button = None
 
         try:
@@ -94,59 +194,6 @@ with open(target_csv, "a", newline="") as csvfile, open(target_stats_csv, "a", n
 
         search_button.click()
 
-        # // wait for page load
-        try:
-            error_message = WebDriverWait(driver, timeout).until(
-                EC.presence_of_element_located(
-                    # (By.XPATH, "//form[@id='errorForm']/span[contains(text(),' mult de 10 000 de rezultate']")
-                    (By.XPATH, "//footer[@id='footer']")
-                )
-            )
-            if error_message:
-                print(f" no footer Error  {start_date} to {current_date}")
-                breakpoint()
-            continue
-        except:
-            pass
-
-        # 6 - Check for the 'Căutarea întoarce mai mult de 10 000 de rezultate' message
-        # error_form = driver.find_elements_by_id("errorForm")
-        error_form = driver.find_elements(By.XPATH, "//form[@id='errorForm']")
-
-        if error_form and error_form[0].text != '':
-            print(f"// Err: 10k 113 for {start_date} to {current_date}")
-            current_date = (datetime.strptime(start_date, "%d.%m.%Y") - timedelta(days=days_delta)).strftime("%d.%m.%Y")
-            submit_button = driver.find_elements(By.XPATH, "//input[@id='errorForm:inchide' and @type='submit']")
-            if submit_button:
-                try:
-                    # submit_button = driver.find_element_by_xpath("//input[@id='errorForm:inchide' and @type='submit']")
-                    
-                    submit_button[0].click()
-                    print("Clicked on the 'Închide' button.")     
-
-                except:
-                    pass
-        else:
-            # print("The form with id 'errorForm' does not exist.")
-            pass
-        
-
-        # 7 - Check for the 'Nu s-au găsit rezultate' message
-        try:
-            no_results_message = WebDriverWait(driver, timeout).until(
-                EC.presence_of_element_located(
-                    (By.XPATH, "//div[@id='form:j_idt142_content']/h5[text()='Nu s-au găsit rezultate']")
-                )
-            )
-          
-            print(f" --> 0 results between {start_date} and {current_date}")
-            current_date = (datetime.strptime(start_date, "%d.%m.%Y") - timedelta(days=days_delta)).strftime("%d.%m.%Y")
-            
-            stats_writer.writerow([start_date, current_date, '0', '0'])
-            continue
-        except:
-            pass
-
         # 8 - Find and print the number of results
         try:
             results_count = WebDriverWait(driver, timeout).until(
@@ -155,12 +202,13 @@ with open(target_csv, "a", newline="") as csvfile, open(target_stats_csv, "a", n
                 )
             )
             print(f" -> {results_count.text} results for {start_date} to {current_date}")
+            stats_writer.writerow([start_date, current_date, results_count.text, dailystats])
             
         except:
             pass
 
         # 9 - Find the table and save data to CSV file
-        # FIXME: loop if paginated
+        
         next_page = True
         nxtpg = 0
         while next_page:
@@ -195,7 +243,8 @@ with open(target_csv, "a", newline="") as csvfile, open(target_stats_csv, "a", n
                     csvwriter.writerow(row_data)
                     dailystats += 1
             except TimeoutException:
-                print(f"187 Timeout: Results table not found for {start_date} to {current_date}")
+                print(f"218 Timeout1: Results table not found for {start_date} to {current_date}")
+                stats_writer.writerow([start_date, current_date, 'TO-1 218', '0'])
             # check if pagination and if next page active
             try:
                 pagination = WebDriverWait(driver, timeout).until(
@@ -227,9 +276,9 @@ with open(target_csv, "a", newline="") as csvfile, open(target_stats_csv, "a", n
             except (StaleElementReferenceException, NoSuchElementException, TimeoutException):
                 next_page = False
                 # pass  # Pagination section is not present
-
+        
         # Update current_date for the next iteration
-        stats_writer.writerow([start_date, current_date, results_count.text, dailystats])
+
         current_date = (datetime.strptime(start_date, "%d.%m.%Y") - timedelta(days=days_delta)).strftime("%d.%m.%Y")
         # print('next date')
     

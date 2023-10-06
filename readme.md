@@ -3,6 +3,10 @@
 ## Roadmap
 
 big pages wo pagination?
+count page turns
+max 10k
+go for bucuresti, bucuresti si un fel de declaratie
+then difference per judet, log errors
 
 - [x] get data from result table
 - [x] follow pagination
