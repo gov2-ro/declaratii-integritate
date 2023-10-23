@@ -10,10 +10,11 @@ from datetime import datetime, timedelta
 
 
 target_csv = "../../data/declaratii.integritate.eu/declaratii-ani.csv"
-days_delta = 5
-timeout = 3
+days_delta = 2
+timeout = 2
 # 5 - Fetch data for each 2-day interval until January 1, 2008
-end_date = "01.01.2020"
+# end_date = "01.01.2020"
+end_date = "24.10.2023"
 
 
 source_url = "https://declaratii.integritate.eu/index.html"
@@ -22,7 +23,8 @@ err_log = "../../data/declaratii.integritate.eu/error.log"
 gecko_driver_path = '/usr/local/bin/geckodriver'
 
 firefox_options = Options()
-firefox_options.headless = False
+# firefox_options.headless = False
+firefox_options.add_argument("--headless=new")
 driver = webdriver.Firefox(service=FirefoxService(executable_path=gecko_driver_path), options=firefox_options)
 
 # 1 - Open the URL
