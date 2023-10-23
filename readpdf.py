@@ -1,6 +1,6 @@
-inputDir = '/Users/pax/devbox/gov2/data/declaratii.integritate.eu/'
+inputDir = '/Users/pax/devbox/gov2/data/declaratii.integritate.eu/pdfs/'
 # fileName = '14540094_2571954_a'
-fileName = '14982713_2774302_a'
+fileName = '27962291ad65165577d239f297e93d1b'
 
 import PyPDF2
 import json

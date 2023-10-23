@@ -12,8 +12,8 @@ from datetime import datetime, timedelta
 last_date = '15.07.2021'
 target_csv = "../../data/declaratii.integritate.eu/declaratii-ani-x12.csv"
 target_stats_csv = "../../data/declaratii.integritate.eu/stats12.csv"
-days_delta = 12
-timeout = 4
+days_delta = 24
+timeout = 2
 # 5 - Fetch data for each 2-day interval until January 1, 2008
 end_date = "01.01.2020"
 
@@ -21,7 +21,8 @@ source_url = "https://declaratii.integritate.eu/index.html"
 gecko_driver_path = '/usr/local/bin/geckodriver'
 
 firefox_options = Options()
-firefox_options.headless = False
+# firefox_options.headless = False
+firefox_options.add_argument("--headless=new")
 driver = webdriver.Firefox(service=FirefoxService(executable_path=gecko_driver_path), options=firefox_options)
 
 # 1 - Open the URL
@@ -85,9 +86,30 @@ with open(target_csv, "a", newline="") as csvfile, open(target_stats_csv, "a", n
             print('have footer')
         else:
             print('no footer')
+
+        expected_text1 = "Nu s-au putut ob"
+        expected_text2 = "rezultate de la server"
+
+        # Find the <h3> element
+        h3_element = driver.find_element(By.TAG_NAME, 'h3')
+
+        # Check if the expected text is a substring of the element's text
+        if expected_text1 or expected_text2 in h3_element.text:
+            # breakpoint()
+            # click on close and move on
+            
+            submit_button = driver.find_element(By.XPATH, "//input[@id='errorForm:inchide' and @type='submit']")
+            if submit_button.is_displayed():
+                submit_button.click()
+                current_date = (datetime.strptime(start_date, "%d.%m.%Y") - timedelta(days=days_delta)).strftime("%d.%m.%Y")
+                print("grr: nu s-au rezultate server")
+            else:
+                print('106 button not shown')
+            
         try:
-            e10k =  driver.find_element(By.XPATH, "//form[@id='errorForm']/span[contains(text(),'mult de 10 000 de rezultate')]")
+            e10k =  driver.find_element(By.XPATH, "//form[@id='errorForm']/span[contains(text(),'10 000 de rezultate')]")
             if e10k:
+                print ('e10k.text')
                 print (e10k.text)
                 breakpoint()
             else:
@@ -110,6 +132,7 @@ with open(target_csv, "a", newline="") as csvfile, open(target_stats_csv, "a", n
 
 
         # check 10k limt
+
         try:
             error_message = WebDriverWait(driver, timeout).until(
                 EC.presence_of_element_located(
