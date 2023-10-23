@@ -10,12 +10,15 @@ from datetime import datetime, timedelta
 
 
 target_csv = "../../data/declaratii.integritate.eu/declaratii-ani.csv"
-days_delta = 2
+days_delta = 5
 timeout = 3
 # 5 - Fetch data for each 2-day interval until January 1, 2008
 end_date = "01.01.2020"
 
+
 source_url = "https://declaratii.integritate.eu/index.html"
+
+err_log = "../../data/declaratii.integritate.eu/error.log"
 gecko_driver_path = '/usr/local/bin/geckodriver'
 
 firefox_options = Options()
@@ -100,7 +103,10 @@ with open(target_csv, "a", newline="") as csvfile:
                     if submit_button.is_displayed():
                         submit_button.click()
                         print('next')
-                        # TODO: save to log, revisit later
+                        # save to log, revisit later
+                        with open(err_log, 'a') as error_log:
+                            error_log.write(f'{current_date}\n')
+                        continue
                         current_date = (datetime.strptime(start_date, "%d.%m.%Y") - timedelta(days=days_delta)).strftime("%d.%m.%Y")
                         continue
                     else:
@@ -111,57 +117,6 @@ with open(target_csv, "a", newline="") as csvfile:
             except NoSuchElementException:
                 print("H3 element or its parent dialog not found")
             breakpoint()
-
-        # # // wait for page load
-        # try:
-        #     error_message = WebDriverWait(driver, timeout).until(
-        #         EC.presence_of_element_located(
-        #             # (By.XPATH, "//form[@id='errorForm']/span[contains(text(),' mult de 10 000 de rezultate']")
-        #             (By.XPATH, "//footer[@id='footer']")
-        #         )
-        #     )
-        #     if error_message:
-        #         print(f" no footer Error  {start_date} to {current_date}")
-        #         breakpoint()
-        #     continue
-        # except:
-        #     pass
-
-        # # 6 - Check for the 'Căutarea întoarce mai mult de 10 000 de rezultate' message
-        # # error_form = driver.find_elements_by_id("errorForm")
-        # error_form = driver.find_elements(By.XPATH, "//form[@id='errorForm']")
-
-        # if error_form and error_form[0].text != '':
-        #     print(f"// Err: 10k 113 for {start_date} to {current_date}")
-        #     current_date = (datetime.strptime(start_date, "%d.%m.%Y") - timedelta(days=days_delta)).strftime("%d.%m.%Y")
-        #     submit_button = driver.find_elements(By.XPATH, "//input[@id='errorForm:inchide' and @type='submit']")
-        #     if submit_button:
-        #         try:
-        #             # submit_button = driver.find_element_by_xpath("//input[@id='errorForm:inchide' and @type='submit']")
-                    
-        #             submit_button[0].click()
-        #             print("Clicked on the 'Închide' button.")     
-
-        #         except:
-        #             pass
-        # else:
-        #     # print("The form with id 'errorForm' does not exist.")
-        #     pass
-        
-
-        # # 7 - Check for the 'Nu s-au găsit rezultate' message
-        # try:
-        #     no_results_message = WebDriverWait(driver, timeout).until(
-        #         EC.presence_of_element_located(
-        #             (By.XPATH, "//div[@id='form:j_idt142_content']/h5[text()='Nu s-au găsit rezultate']")
-        #         )
-        #     )
-          
-        #     print(f"No results found for {start_date} to {current_date}")
-        #     current_date = (datetime.strptime(start_date, "%d.%m.%Y") - timedelta(days=days_delta)).strftime("%d.%m.%Y")
-        #     continue
-        # except:
-        #     pass
 
         # 8 - Find and print the number of results
         try:
@@ -175,7 +130,6 @@ with open(target_csv, "a", newline="") as csvfile:
             pass
 
         # 9 - Find the table and save data to CSV file
-        # FIXME: loop if paginated
         next_page = True
         nxtpg = 0
         while next_page:
@@ -225,7 +179,6 @@ with open(target_csv, "a", newline="") as csvfile:
                     # break  # No more pages to scrape
                 else:
                     next_page = True
-
 
                     # Scroll to the "Next" page link and then click it
                     try:
