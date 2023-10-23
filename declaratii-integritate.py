@@ -13,14 +13,16 @@ target_csv = "../../data/declaratii.integritate.eu/declaratii-ani.csv"
 days_delta = 2
 timeout = 2
 # 5 - Fetch data for each 2-day interval until January 1, 2008
-# end_date = "01.01.2020"
-end_date = "24.10.2023"
+end_date = "01.01.2008"
+
 
 
 source_url = "https://declaratii.integritate.eu/index.html"
 
 err_log = "../../data/declaratii.integritate.eu/error.log"
 gecko_driver_path = '/usr/local/bin/geckodriver'
+
+current_date = datetime.now().strftime("%d.%m.%Y")
 
 firefox_options = Options()
 # firefox_options.headless = False
@@ -59,7 +61,7 @@ if advanced_search_panel is None:
     )
 
 # 4 - Get the current date
-current_date = datetime.now().strftime("%d.%m.%Y")
+
 
 with open(target_csv, "a", newline="") as csvfile:
     csvwriter = csv.writer(csvfile)
