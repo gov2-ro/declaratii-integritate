@@ -14,7 +14,7 @@ target_csv = "../../data/declaratii.integritate.eu/declaratii-ani.csv"
 csv_downloads_folder = "/Users/pax/devbox/gov2/data/declaratii.integritate.eu/csvs/"
 csv_basename = 'declaraii-'
 days_delta = 2
-timeout = 2
+timeout = 3
 # 5 - Fetch data for each 2-day interval until January 1, 2008
 end_date = "01.01.2008"
 
@@ -131,7 +131,9 @@ with open(target_csv, "a", newline="") as csvfile:
                 # print("Found the H3 element and its parent dialog:", item.text)
             except NoSuchElementException:
                 print("H3 element or its parent dialog not found")
-            breakpoint()
+                current_date = (datetime.strptime(start_date, "%d.%m.%Y") - timedelta(days=days_delta)).strftime("%d.%m.%Y")
+            # breakpoint()
+            current_date = (datetime.strptime(start_date, "%d.%m.%Y") - timedelta(days=days_delta)).strftime("%d.%m.%Y")
 
         # 8 - Find and print the number of results
         rez_count = 0
@@ -149,22 +151,24 @@ with open(target_csv, "a", newline="") as csvfile:
 
         # 9.0 save csv file
         export_button = None
-
         try:
             export_button = driver.find_element(By.ID, "form:dataExporter")
         except:
             pass
         if export_button is None:
-            export_button = WebDriverWait(driver, timeout).until(
-                EC.element_to_be_clickable((By.ID, "form:dataExporter"))
-            )
-        
+            try:
+                export_button = WebDriverWait(driver, timeout).until(
+                    EC.element_to_be_clickable((By.ID, "form:dataExporter"))
+                )
+            except Exception as e:
+                print(e)
+                # TODO: log error    
         try:
             driver.execute_script("arguments[0].scrollIntoView();", export_button)
         except Exception as e:
             print(e)
         try:
-            export_button.click() # TODO:FIXME: Element <button id="form:dataExporter" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only" name="form:dataExporter"> could not be scrolled into view
+            export_button.click() # FIXED? TODO:FIXME: Element <button id="form:dataExporter" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only" name="form:dataExporter"> could not be scrolled into view
         except Exception as e:
             print(e)
         # new_file_name = csv_downloads_folder + csv_basename + "/path/to/your/directory/new_filename.extension"
@@ -200,18 +204,20 @@ with open(target_csv, "a", newline="") as csvfile:
                 rows = results_table.find_elements(By.TAG_NAME, "tr")
 
                 for row in rows[1:]:
-                    
-                    cells = row.find_elements(By.TAG_NAME, "td")[:-1]  # Exclude the last 'Distribuie' column
-                    vezi_declaratie_link = row.find_element(By.XPATH, ".//a[contains(text(),'Vezi document')]").get_attribute("href") 
-                    # TODO:FIXME: sometimes it breaks here
-                    # selenium.common.exceptions.StaleElementReferenceException: Message: The element with the reference 9de89597-4c45-49d4-bea2-52e44b8ce440 is stale; either its node document is not the active document, or it is no longer connected to the DOM
-                    row_data = [cell.text for cell in cells] # TODO:FIXME: sometimes it breaks here
-                    row_data.append(vezi_declaratie_link)  # Add the 'Vezi declaratie' link
-                    row_data.append(nxtpg)  # Add the 'Vezi declaratie' link
-                    row_data.append(rez_count)  # Add the 'Vezi declaratie' link
-                    row_data.append(start_date)  # Add the 'Vezi declaratie' link
-                    row_data.append(current_date)  # Add the 'Vezi declaratie' link
-                    csvwriter.writerow(row_data)
+                    try:
+                        cells = row.find_elements(By.TAG_NAME, "td")[:-1]  # Exclude the last 'Distribuie' column
+                        vezi_declaratie_link = row.find_element(By.XPATH, ".//a[contains(text(),'Vezi document')]").get_attribute("href") 
+                        # TODO:FIXME: sometimes it breaks here
+                        # selenium.common.exceptions.StaleElementReferenceException: Message: The element with the reference 9de89597-4c45-49d4-bea2-52e44b8ce440 is stale; either its node document is not the active document, or it is no longer connected to the DOM
+                        row_data = [cell.text for cell in cells] # TODO:FIXME: sometimes it breaks here
+                        row_data.append(vezi_declaratie_link)  # Add the 'Vezi declaratie' link
+                        row_data.append(nxtpg)  # Add the 'Vezi declaratie' link
+                        row_data.append(rez_count)  # Add the 'Vezi declaratie' link
+                        row_data.append(start_date)  # Add the 'Vezi declaratie' link
+                        row_data.append(current_date)  # Add the 'Vezi declaratie' link
+                        csvwriter.writerow(row_data)
+                    except:
+                        continue
             except TimeoutException:
                 print(f"187 Timeout: Results table not found for {start_date} to {current_date}")
             # check if pagination and if next page active
@@ -232,10 +238,14 @@ with open(target_csv, "a", newline="") as csvfile:
                     # Scroll to the "Next" page link and then click it
                     try:
                         driver.execute_script("arguments[0].scrollIntoView();", next_page_link[0])
-                        next_page_link[0].click()
-                        next_page = True
-                        nxtpg += 1
-                        print('    - p ' + str(nxtpg))
+                        try: 
+                            next_page_link[0].click()
+                            next_page = True
+                            nxtpg += 1
+                            print('    - p ' + str(nxtpg))
+                        except:
+                            next_page = False
+                            # TODO: log error
                     except ElementNotInteractableException:
                         next_page = False
                         # pass  # Break the loop if the element is not interactable
