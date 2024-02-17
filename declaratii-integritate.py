@@ -69,7 +69,6 @@ if advanced_search_panel is None:
 
 # 4 - Get the current date
 
-
 with open(target_csv, "a", newline="") as csvfile:
     csvwriter = csv.writer(csvfile)
     header = []
@@ -106,7 +105,6 @@ with open(target_csv, "a", newline="") as csvfile:
             search_button.click()
         except:
             try:
-                # h3_element = driver.find_element(By.XPATH, "//h3[contains(text(), '10 000 de rezultate')]")
                 item = driver.find_element(By.CSS_SELECTOR, "#_t161").get_attribute('innerText')
                 if '10 000' in item:
                     print('has 10k')
@@ -121,10 +119,8 @@ with open(target_csv, "a", newline="") as csvfile:
                         current_date = (datetime.strptime(start_date, "%d.%m.%Y") - timedelta(days=days_delta)).strftime("%d.%m.%Y")
                         continue
                     else:
-                        # print('106 button not shown')
                         pass
-                
-                # print("Found the H3 element and its parent dialog:", item.text)
+
             except NoSuchElementException:
                 print("H3 element or its parent dialog not found")
             breakpoint()
@@ -142,7 +138,7 @@ with open(target_csv, "a", newline="") as csvfile:
         except:
             pass
 
-    # 9.0 save csv file
+        # 9.0 save csv file
         export_button = None
         try:
             export_button = driver.find_element(By.ID, "form:dataExporter")
@@ -212,13 +208,11 @@ with open(target_csv, "a", newline="") as csvfile:
                     EC.presence_of_element_located((By.CLASS_NAME, "ui-paginator-pages"))
                 )
 
-            
                 # Check for the presence of the "Next" page link
                 next_page_link = driver.find_elements(By.XPATH, "//a[@id='form:resultsTable_paginatorbottom_nextPageLink' and not(contains(@class, 'ui-state-disabled'))]")
 
                 if not next_page_link:
                     next_page = False
-                    # break  # No more pages to scrape
                 else:
                     next_page = True
 
@@ -231,16 +225,13 @@ with open(target_csv, "a", newline="") as csvfile:
                         print('    - p ' + str(nxtpg))
                     except ElementNotInteractableException:
                         next_page = False
-                        # pass  # Break the loop if the element is not interactable
 
             except (StaleElementReferenceException, NoSuchElementException, TimeoutException):
                 next_page = False
-                # pass  # Pagination section is not present
 
         # Update current_date for the next iteration
         current_date = (datetime.strptime(start_date, "%d.%m.%Y") - timedelta(days=days_delta)).strftime("%d.%m.%Y")
         # print('next date')
-    
 
 # Close the browser
 driver.quit()
