@@ -1,4 +1,4 @@
-[declaratii.integritate.eu](https://declaratii.integritate.eu/) 
+[declaratii.integritate.eu](https://declaratii.integritate.eu/) scraper
 
 - `declaratii-integritate.py `- fetches html rows and csvs (Exporta resultate)
 - `consolidate_dl_csvs.py` - consolidates dowloaded (Exporta resultate) csvs
@@ -55,21 +55,18 @@ click advanced
         advance days
 
 
-1 - open https://declaratii.integritate.eu/index.html
+1 - open [declaratii.integritate.eu](https://declaratii.integritate.eu/index.html) 
 
-2 - click 'Căutare avansată' button (<a id="form:showAdvancedSearch">) found here: <div class="srch_switch"><a href="#" id="form:showAdvancedSearch">Căutare avansată</a><span></span></div>
+2 - click _'Căutare avansată'_ button (`<a id="form:showAdvancedSearch">`) found here: `<div class="srch_switch"><a href="#" id="form:showAdvancedSearch">Căutare avansată</a><span></span></div>`
 
-3 - wait for <div id="form:advanced-search-panel"><table><tbody><tr><td><div id="form:advanced-search-panel_content"> to load
+3 - wait for `<div id="form:advanced-search-panel"> ... <div id="form:advanced-search-panel_content">` to load
 
-4 - input current date (ex: 03.10.2023) in this field, also change 'value' parameter accordingly  <input id="form:endDate_input" name="form:endDate_input" role="textbox" type="text" value="03.10.2023">
-    input current date - 3 working days (ex: 29.09.2023) in  <input id="form:startDate_input" name="form:startDate_input" role="textbox" size="10" type="text" value="29.09.2023"> - also change 'value' attribute inside tag
+4 - input current date (ex: 03.10.2023) in this field, also change 'value' parameter accordingly  `<input id="form:endDate_input" name="form:endDate_input" role="textbox" type="text" value="03.10.2023">`
+    input current date - 3 working days (ex: 29.09.2023) in  `<input id="form:startDate_input" name="form:startDate_input" role="textbox" size="10" type="text" value="29.09.2023">` - also change 'value' attribute inside tag
 
-5 - click on <input id="form:submitButtonAS"> inside <div class="advanced_srch_subm_right"><input class="button" id="form:submitButtonAS" name="form:submitButtonAS" type="submit" value="caută>"><span></span></div>
+5 - click on `<input id="form:submitButtonAS">` inside `<div class="advanced_srch_subm_right"><input class="button" id="form:submitButtonAS" name="form:submitButtonAS" type="submit" value="caută>"><span></span></div>`
 
-----
-
-<table><thead><tr><th><div>Nume Prenume&nbsp;</div></th><th><div>Institutie&nbsp;</div></th><th><div>Functie&nbsp;</div></th><th><div>Localitate&nbsp;</div></th><th><div>Judet&nbsp;</div></th><th><div>Data completare declaratie&nbsp;</div></th><th><div>Tip declaratie&nbsp;</div></th><th><div>Vezi declaratie</div></th></tr></thead><tbody><tr><td>GRECU P PETRUȚA AURORA</td><td>Liceul Tehnologic Energetic Dragomir Hurmuzescu Deva</td><td>Director adjunct</td><td>Deva</td><td>Hunedoara</td><td>30.09.2023</td><td>Declaraţie de avere</td><td><a href="/DownloadServlet?fileName=15080778_2787787_a.pdf&amp;uniqueIdentifier=NTNTARTLNE_15080778">Vezi document</a></td></tr><tr><td>DAMIAN D IULIA</td><td>Administratia Nationala Apele Romane - Cod Caen 3600, 3900, 4291, 6203, 7112, 7120, 7219, 8413, 8425, 8559</td><td>Șef birou</td><td>Sectorul 1</td><td>Bucuresti</td><td>02.10.2023</td><td>Declaraţie de avere</td><td><a href="/DownloadServlet?fileName=15070872_2787968_a.pdf&amp;uniqueIdentifier=NTNTARTLNE_15070872">Vezi document</a></td></tr><tr><td>TEODORESCU Gh GEORGETA</td><td>Inspectoratul Scolar Al Judetului Arges</td><td>Inspector scolar</td><td>Pitesti</td><td>Arges</td><td>30.09.2023</td><td>Declaraţie de interese</td><td><a href="/DownloadServlet?fileName=15080747_2787683_a.pdf&amp;uniqueIdentifier=NTNTARTLNE_15080747">Vezi document</a></td></tr><tr><td>Gorcitz V Lucica</td><td>Directia Generala Regionala A Finantelor Publice Brasov</td><td>Inspector</td><td>Targu Mures</td><td>Mures</td><td>02.10.2023</td><td>Declaraţie de avere</td><td><a href="/DownloadServlet?fileName=15080746_2787919_a.pdf&amp;uniqueIdentifier=NTNTARTLNE_15080746">Vezi document</a></td></tr></tbody></table>
-
+<table><thead><tr><th><div>Nume Prenume&nbsp;</div></th><th><div>Institutie&nbsp;</div></th><th><div>Functie&nbsp;</div></th><th><div>Localitate&nbsp;</div></th><th><div>Judet&nbsp;</div></th><th><div>Data completare declaratie&nbsp;</div></th><th><div>Tip declaratie&nbsp;</div></th></tr></thead><tbody><tr><td>GRECU P PETRUȚA AURORA</td><td>Liceul Tehnologic Energetic Dragomir Hurmuzescu Deva</td><td>Director adjunct</td><td>Deva</td><td>Hunedoara</td><td>30.09.2023</td><td>Declaraţie de avere</td></tr><tr><td>DAMIAN D IULIA</td><td>Administratia Nationala Apele Romane - Cod Caen 3600, 3900, 4291, 6203, 7112, 7120, 7219, 8413, 8425, 8559</td><td>Șef birou</td><td>Sectorul 1</td><td>Bucuresti</td><td>02.10.2023</td><td>Declaraţie de avere</td></tr><tr><td>TEODORESCU Gh GEORGETA</td><td>Inspectoratul Scolar Al Judetului Arges</td><td>Inspector scolar</td><td>Pitesti</td><td>Arges</td><td>30.09.2023</td><td>Declaraţie de interese</td></tr><tr><td>Gorcitz V Lucica</td><td>Directia Generala Regionala A Finantelor Publice Brasov</td><td>Inspector</td><td>Targu Mures</td><td>Mures</td><td>02.10.2023</td><td>Declaraţie de avere</td></tr></tbody></table>
 
 -----
 
