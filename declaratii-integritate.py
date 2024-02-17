@@ -7,6 +7,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import StaleElementReferenceException, TimeoutException, ElementNotInteractableException, NoSuchElementException
 import csv
 from datetime import datetime, timedelta
+import os
+import sys
 
 """ 
 TODO:
@@ -162,7 +164,11 @@ while current_date > end_date:
 
                         except NoSuchElementException:
                             print("H3 element or its parent dialog not found")
-                        breakpoint()
+                            log_activity([datetime.now(), current_date, '--', 'err 165', 'H3 element or its parent dialog not found'])
+                            # breakpoint()
+                            print('re-init')
+                            # os.execv(sys.executable, ['python'] + sys.argv)
+                            break
 
                     # 8 - Find and print the number of results
                     rez_count = 0
@@ -176,7 +182,7 @@ while current_date > end_date:
                         rez_count = results_count.text
                     except:
                         log_activity([datetime.now(), current_date, '-', 'err', 'pass 156'])
-                        pass
+                        
 
                     # 9.0 save csv file
                     export_button = None
