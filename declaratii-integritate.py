@@ -205,7 +205,8 @@ while current_date > end_date:
                         print(e)
                         log_activity([datetime.now(), current_date, '- 178', 'err', str(e)])
                     try:
-                        export_button.click() # FIXED? TODO:FIXME: Element <button id="form:dataExporter" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only" name="form:dataExporter"> could not be scrolled into view
+                        export_button.click() # Click the "Export" button
+                        # TODO: change download name
                         log_activity([datetime.now(), current_date, 'real savecsv', 'ok', 'xx saved csv'])
                     except Exception as e:
                         print(e)

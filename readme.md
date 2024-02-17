@@ -12,13 +12,21 @@ then difference per judet, log errors
 - [x] follow pagination
 - [x] loop dates
 - [x] log errors
-- [ ] log results
+- [ ] log results & meta/ count results
 - [x] prevent overwrite (update untill found)
-- [ ] consolidate downloaded csvs
-    - [ ] remove duplicates
-- [ ] compare results - between downloaded csvs and scraped table pages / rows 
+- [ ] consolidate declaratii din tabel
+- [x] download csvs
+  - [ ] rename to target date
+- [x] consolidate downloaded csvs
+    - [x] remove duplicates
+- [x] compare results - between downloaded csvs and scraped table pages / rows 
 - [ ] update missing values
+    - [ ] break query in parts - date, tip declaratie, judet
 - [ ] scrape from today to the latest logged day
+- [ ] download pdfs
+- [ ] parse pdfs
+
+
 
 open page
 click advanced
