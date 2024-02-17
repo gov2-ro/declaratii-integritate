@@ -11,10 +11,14 @@ then difference per judet, log errors
 - [x] get data from result table
 - [x] follow pagination
 - [x] loop dates
-- [ ] log errors
+- [x] log errors
 - [ ] log results
-- [ ] prevent overwrite (update untill found)
-
+- [x] prevent overwrite (update untill found)
+- [ ] consolidate downloaded csvs
+    - [ ] remove duplicates
+- [ ] compare results - between downloaded csvs and scraped table pages / rows 
+- [ ] update missing values
+- [ ] scrape from today to the latest logged day
 
 open page
 click advanced
