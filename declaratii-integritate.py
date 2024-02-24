@@ -10,21 +10,12 @@ from datetime import datetime, timedelta
 import os
 import sys
 
-""" 
-TODO:
-- [x] Add error handling
-- [ ] check also since today - most recent day
-
- """
+ 
  
 target_csv = "../../data/declaratii.integritate.eu/declaratii-ani.csv"
 scrapping_log = "../../data/declaratii.integritate.eu/scrapping-log.csv"
-# scrapping_log should have the following columns: timestamp, current_date, mode  ,status, error
-# mode can be `csvdl` (triggered after csvwriter = csv.writer(csvfile)) or `tbscrp` (triggered after `while next_page:` loop completion)
-# status can be `ok` or `error`. For  tbscrp rows save number of found pages and currently saved rows for that page
 days_delta = 2
-timeout = 2
-# 5 - Fetch data for each 2-day interval until January 1, 2008
+timeout = 2 # 5 - Fetch data for each 2-day interval until January 1, 2008
 end_date = "01.01.2008"
 
 csv_downloads_folder = "/Users/pax/devbox/gov2/data/declaratii.integritate.eu/csvs/"
