@@ -44,6 +44,15 @@ def get_current_date():
 def get_previous_date(current_date):
     return (datetime.strptime(current_date, "%d.%m.%Y") - timedelta(days=1)).strftime("%d.%m.%Y")
 
+def get_last_date_from_log():
+    try:
+        with open(scrapping_log, 'r') as log_file:
+            log_reader = csv.reader(log_file)
+            last_row = list(log_reader)[-1]
+            return (datetime.strptime(last_row[1], "%d.%m.%Y") - timedelta(days=1)).strftime("%d.%m.%Y")
+    except Exception as e:
+        print(f"Error reading last date from log: {e}")
+        return None
 # Scraping tasks
 def perform_scraping(driver, current_date):
     # Navigate to the source URL
@@ -94,7 +103,7 @@ def perform_scraping(driver, current_date):
         )
         print(f" -> {results_count.text} results for {start_date} to {current_date}")
     except TimeoutException:
-        log_activity([datetime.now(), current_date, '-', 'err', 'pass  156'])
+        log_activity([datetime.now(), current_date, '-', 'no Results', 'L97'])
         return
 
     # Save csv file
@@ -158,7 +167,10 @@ def perform_scraping(driver, current_date):
 
 # Main execution
 def main():
-    current_date = get_current_date()
+    current_date = get_last_date_from_log()
+    if current_date is None:
+        current_date = get_current_date()
+
     runs =  0
     while current_date > end_date:
         runs +=  1
